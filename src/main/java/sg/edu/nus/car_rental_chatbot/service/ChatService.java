@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import sg.edu.nus.car_rental_chatbot.client.AIClient;
 import sg.edu.nus.car_rental_chatbot.model.Car;
 
 @Service
@@ -11,10 +12,16 @@ public class ChatService {
 
     private final PromptBuilder promptBuilder;
     private final CarSearchService carSearchService;
+    private final AIClient aiClient;
 
-    public ChatService(PromptBuilder promptBuilder, CarSearchService carSearchService) {
+    public ChatService(
+            PromptBuilder promptBuilder,
+            CarSearchService carSearchService,
+            AIClient aiClient
+    ) {
         this.promptBuilder = promptBuilder;
         this.carSearchService = carSearchService;
+        this.aiClient = aiClient;
     }
 
     public String getReply(String userMessage) {
@@ -22,6 +29,6 @@ public class ChatService {
 
         String prompt = promptBuilder.buildPrompt(userMessage, relevantCars);
 
-        return "Filtered grounded prompt created successfully:\n\n" + prompt;
+        return aiClient.callAI(prompt);
     }
 }
