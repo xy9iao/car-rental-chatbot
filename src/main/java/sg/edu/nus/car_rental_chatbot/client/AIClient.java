@@ -54,7 +54,7 @@ public class AIClient {
                     HttpResponse.BodyHandlers.ofString()
             );
 
-            return response.body();
+            return extractAssistantReply(response.body());
 
         } catch (Exception e) {
             return "OpenRouter API call failed: " + e.getMessage();
@@ -68,5 +68,57 @@ public class AIClient {
                 .replace("\n", "\\n")
                 .replace("\r", "\\r")
                 + "\"";
+    }
+
+    private String extractAssistantReply(String responseBody) {
+        String marker = "\"content\":\"";
+        int start = responseBody.indexOf(marker);
+
+        if (start == -1) {
+            return "Could not extract assistant reply. Raw response: " + responseBody;
+        }
+
+        start += marker.length();
+
+        StringBuilder result = new StringBuilder();
+        boolean escaping = false;
+
+        for (int i = start; i < responseBody.length(); i++) {
+            char c = responseBody.charAt(i);
+
+            if (escaping) {
+                switch (c) {
+                    case 'n':
+                        result.append('\n');
+                        break;
+                    case 'r':
+                        result.append('\r');
+                        break;
+                    case 't':
+                        result.append('\t');
+                        break;
+                    case '"':
+                        result.append('"');
+                        break;
+                    case '\\':
+                        result.append('\\');
+                        break;
+                    default:
+                        result.append(c);
+                        break;
+                }
+                escaping = false;
+            } else {
+                if (c == '\\') {
+                    escaping = true;
+                } else if (c == '"') {
+                    break;
+                } else {
+                    result.append(c);
+                }
+            }
+        }
+
+        return result.toString();
     }
 }
