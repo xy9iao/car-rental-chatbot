@@ -5,8 +5,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class ChatService {
 
+    private final PromptBuilder promptBuilder;
+
+    public ChatService(PromptBuilder promptBuilder) {
+        this.promptBuilder = promptBuilder;
+    }
+
     public String getReply(String userMessage) {
-        return "You said: " + userMessage
-                + ". I am the car rental chatbot. Service layer is working.";
+        String prompt = promptBuilder.buildPrompt(userMessage);
+
+        return "Prompt created successfully:\n\n" + prompt;
     }
 }
