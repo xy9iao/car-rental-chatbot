@@ -5,24 +5,23 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import sg.edu.nus.car_rental_chatbot.model.Car;
-import sg.edu.nus.car_rental_chatbot.repository.CarRepository;
 
 @Service
 public class ChatService {
 
     private final PromptBuilder promptBuilder;
-    private final CarRepository carRepository;
+    private final CarSearchService carSearchService;
 
-    public ChatService(PromptBuilder promptBuilder, CarRepository carRepository) {
+    public ChatService(PromptBuilder promptBuilder, CarSearchService carSearchService) {
         this.promptBuilder = promptBuilder;
-        this.carRepository = carRepository;
+        this.carSearchService = carSearchService;
     }
 
     public String getReply(String userMessage) {
-        List<Car> cars = carRepository.findAll();
+        List<Car> relevantCars = carSearchService.searchRelevantCars(userMessage);
 
-        String prompt = promptBuilder.buildPrompt(userMessage, cars);
+        String prompt = promptBuilder.buildPrompt(userMessage, relevantCars);
 
-        return "Grounded prompt created successfully:\n\n" + prompt;
+        return "Filtered grounded prompt created successfully:\n\n" + prompt;
     }
 }
