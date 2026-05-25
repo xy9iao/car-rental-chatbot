@@ -31,13 +31,17 @@ public class DatasetContextService {
             Resource[] files = new PathMatchingResourcePatternResolver()
                     .getResources("classpath:data/*.txt");
 
-            Arrays.sort(files, Comparator.comparing(Resource::getFilename, String.CASE_INSENSITIVE_ORDER));
+            Arrays.sort(files, Comparator.comparing(
+                    file -> file.getFilename() == null ? "" : file.getFilename(),
+                    String.CASE_INSENSITIVE_ORDER
+            ));
 
             if (files.length == 0) {
                 throw new RuntimeException("No dataset .txt files found in classpath:data/");
             }
 
             return files;
+
         } catch (IOException e) {
             throw new RuntimeException("Failed to load dataset files from classpath:data/", e);
         }

@@ -1,5 +1,6 @@
 package sg.edu.nus.car_rental_chatbot.controller;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,5 +22,11 @@ public class ChatController {
     public ChatResponse chat(@RequestBody ChatRequest request) {
         String reply = chatService.getReply(request.getMessage());
         return new ChatResponse(reply);
+    }
+
+    @DeleteMapping("/api/chat/history")
+    public ChatResponse clearHistory() {
+        chatService.clearHistory();
+        return new ChatResponse("Conversation history cleared.");
     }
 }
