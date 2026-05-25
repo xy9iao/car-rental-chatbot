@@ -1,8 +1,10 @@
 const chatBox = document.getElementById("chat-box");
 const messageInput = document.getElementById("message-input");
 const sendButton = document.getElementById("send-button");
+const clearButton = document.getElementById("clear-button");
 
 sendButton.addEventListener("click", sendMessage);
+clearButton.addEventListener("click", clearChat);
 
 messageInput.addEventListener("keydown", function (event) {
     if (event.key === "Enter") {
@@ -45,6 +47,18 @@ async function sendMessage() {
     }
 }
 
+async function clearChat() {
+    try {
+        await fetch("/api/chat/history", {
+            method: "DELETE"
+        });
+    } catch (error) {
+        console.error("Could not clear backend conversation history:", error);
+    }
+
+    location.reload();
+}
+
 function addMessage(text, sender) {
     const messageElement = document.createElement("div");
     messageElement.classList.add("message");
@@ -63,3 +77,4 @@ function removeLastBotThinkingMessage() {
         lastBotMessage.remove();
     }
 }
+
