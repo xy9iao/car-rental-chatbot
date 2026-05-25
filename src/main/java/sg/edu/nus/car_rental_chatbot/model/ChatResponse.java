@@ -1,4 +1,4 @@
-package sg.edu.nus.car_rental_chatbot.dto;
+package sg.edu.nus.car_rental_chatbot.model;
 
 public class ChatResponse {
     private String reply;

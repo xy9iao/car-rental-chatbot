@@ -1,34 +1,29 @@
 package sg.edu.nus.car_rental_chatbot.service;
 
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 
 import sg.edu.nus.car_rental_chatbot.client.AIClient;
-import sg.edu.nus.car_rental_chatbot.model.Car;
 
 @Service
 public class ChatService {
 
     private final PromptBuilder promptBuilder;
-    private final CarSearchService carSearchService;
+    private final DatasetContextService datasetContextService;
     private final AIClient aiClient;
 
     public ChatService(
             PromptBuilder promptBuilder,
-            CarSearchService carSearchService,
+            DatasetContextService datasetContextService,
             AIClient aiClient
     ) {
         this.promptBuilder = promptBuilder;
-        this.carSearchService = carSearchService;
+        this.datasetContextService = datasetContextService;
         this.aiClient = aiClient;
     }
 
     public String getReply(String userMessage) {
-        List<Car> relevantCars = carSearchService.searchRelevantCars(userMessage);
-
-        String prompt = promptBuilder.buildPrompt(userMessage, relevantCars);
-
+        String datasetContext = datasetContextService.buildDatasetContext();
+        String prompt = promptBuilder.buildPrompt(userMessage, datasetContext);
         return aiClient.callAI(prompt);
     }
 }
