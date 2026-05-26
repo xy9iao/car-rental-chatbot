@@ -5,7 +5,6 @@ const clearButton = document.getElementById("clear-button");
 
 sendButton.addEventListener("click", sendMessage);
 clearButton.addEventListener("click", clearChat);
-
 messageInput.addEventListener("keydown", function (event) {
     if (event.key === "Enter") {
         sendMessage();
