@@ -1,15 +1,15 @@
 package sg.edu.nus.car_rental_chatbot.controller;
 
-import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
 
 import sg.edu.nus.car_rental_chatbot.model.ChatRequest;
-import sg.edu.nus.car_rental_chatbot.model.ChatResponse;
 import sg.edu.nus.car_rental_chatbot.service.ChatService;
 
-@RestController
+@Controller
 public class ChatController {
 
     private final ChatService chatService;
@@ -18,15 +18,31 @@ public class ChatController {
         this.chatService = chatService;
     }
 
-    @PostMapping("/api/chat")
-    public ChatResponse chat(@RequestBody ChatRequest request) {
-        String reply = chatService.getReply(request.getMessage());
-        return new ChatResponse(reply);
+    // Shows the first page. The browser receives HTML rendered by Thymeleaf.
+    @GetMapping("/")
+    public String index(Model model) {
+        model.addAttribute("chatRequest", new ChatRequest());
+        return "index";
     }
 
-    @DeleteMapping("/api/chat/history")
-    public ChatResponse clearHistory() {
-        chatService.clearHistory();
-        return new ChatResponse("Conversation history cleared.");
+    // Receives the form submission from the browser.
+    // The controller stays thin: it reads the user input, asks the service for a reply,
+    // and passes the result back to Thymeleaf for rendering.
+    @PostMapping("/chat")
+    public String chat(@ModelAttribute ChatRequest request, Model model) {
+        String reply = chatService.getReply(request.getMessage());
+
+        model.addAttribute("chatRequest", new ChatRequest());
+        model.addAttribute("userMessage", request.getMessage());
+        model.addAttribute("botReply", reply);
+
+        return "index";
+    }
+
+    // Clear does not need JavaScript. It simply renders a fresh page.
+    @PostMapping("/clear")
+    public String clear(Model model) {
+        model.addAttribute("chatRequest", new ChatRequest());
+        return "index";
     }
 }

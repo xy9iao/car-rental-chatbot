@@ -1,32 +1,32 @@
 package sg.edu.nus.car_rental_chatbot.service;
 
-import java.util.List;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import sg.edu.nus.car_rental_chatbot.client.AIClient;
-import sg.edu.nus.car_rental_chatbot.model.ChatMessage;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import sg.edu.nus.car_rental_chatbot.model.ChatRequest;
+import sg.edu.nus.car_rental_chatbot.model.ChatResponse;
 
 @Service
 public class ChatService {
 
-    private final DatasetContextService datasetContextService;
-    private final PromptBuilder promptBuilder;
-    private final AIClient aiClient;
-    private final ConversationHistoryService conversationHistoryService;
+    @Value("${ai.local.url}")
+    private String fastApiUrl;
 
-    public ChatService(
-            DatasetContextService datasetContextService,
-            PromptBuilder promptBuilder,
-            AIClient aiClient,
-            ConversationHistoryService conversationHistoryService
-    ) {
-        this.datasetContextService = datasetContextService;
-        this.promptBuilder = promptBuilder;
-        this.aiClient = aiClient;
-        this.conversationHistoryService = conversationHistoryService;
-    }
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
+    // The service contains the main business flow:
+    // 1. Validate the user message.
+    // 2. Send it to FastAPI.
+    // 3. Read the FastAPI response.
+    // This demonstrates why Spring Boot can act as middleware between the browser and Python.
     public String getReply(String userMessage) {
         if (userMessage == null || userMessage.trim().isEmpty()) {
             return "Please enter a message.";
@@ -36,25 +36,48 @@ public class ChatService {
             return "Your message is too long. Please keep it under 500 characters.";
         }
 
-        String datasetContext = datasetContextService.buildDatasetContext();
-
-        List<ChatMessage> history = conversationHistoryService.getRecentHistory();
-
-        String prompt = promptBuilder.buildPrompt(
-                userMessage,
-                datasetContext,
-                history
-        );
-
-        String assistantReply = aiClient.callAI(prompt);
-
-        conversationHistoryService.addUserMessage(userMessage);
-        conversationHistoryService.addAssistantMessage(assistantReply);
-
-        return assistantReply;
+        return callFastApi(userMessage);
     }
 
-    public void clearHistory() {
-        conversationHistoryService.clearHistory();
+    // Spring Boot calls FastAPI through HTTP POST.
+    // Request flow: Spring sends ChatRequest JSON to Python.
+    // Response flow: Python sends ChatResponse JSON back to Spring.
+    private String callFastApi(String userMessage) {
+        try {
+            ChatRequest fastApiRequest = new ChatRequest(userMessage);
+            String requestJson = objectMapper.writeValueAsString(fastApiRequest);
+
+            HttpURLConnection connection = (HttpURLConnection) URI.create(fastApiUrl)
+                    .toURL()
+                    .openConnection();
+
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Accept", "application/json");
+            connection.setDoOutput(true);
+
+            // Write the JSON request body that FastAPI expects:
+            // {"message":"the user's message"}
+            try (OutputStream outputStream = connection.getOutputStream()) {
+                outputStream.write(requestJson.getBytes(StandardCharsets.UTF_8));
+            }
+
+            int statusCode = connection.getResponseCode();
+            InputStream responseStream = statusCode >= 200 && statusCode < 300
+                    ? connection.getInputStream()
+                    : connection.getErrorStream();
+
+            String responseJson = new String(responseStream.readAllBytes(), StandardCharsets.UTF_8);
+
+            if (statusCode < 200 || statusCode >= 300) {
+                return "FastAPI returned HTTP " + statusCode + ": " + responseJson;
+            }
+
+            ChatResponse chatResponse = objectMapper.readValue(responseJson, ChatResponse.class);
+            return chatResponse.getReply();
+
+        } catch (Exception error) {
+            return "Could not call FastAPI service: " + error.getMessage();
+        }
     }
 }
