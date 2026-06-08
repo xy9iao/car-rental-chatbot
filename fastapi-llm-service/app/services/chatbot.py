@@ -4,15 +4,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
 
+
 load_dotenv()
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = PROJECT_ROOT / "src" / "main" / "resources" / "data"
-
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY")
-)
+MODEL = "meta-llama/llama-3-8b-instruct"
 
 
 def load_context_from_data():
@@ -23,6 +20,18 @@ def load_context_from_data():
         context_parts.append(f"=== {path.name} ===\n{text}")
 
     return "\n\n".join(context_parts)
+
+
+def create_openrouter_client():
+    api_key = os.getenv("OPENROUTER_API_KEY")
+
+    if not api_key:
+        raise RuntimeError("OPENROUTER_API_KEY is not set.")
+
+    return OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=api_key,
+    )
 
 
 def build_system_prompt():
@@ -63,19 +72,21 @@ Assistant: I can help with that, but I need the rental date and pickup location 
 """.strip()
 
 
-def generate_reply(question):
+def generate_reply(question: str) -> str:
+    client = create_openrouter_client()
+
     response = client.chat.completions.create(
-        model="meta-llama/llama-3-8b-instruct",
+        model=MODEL,
         messages=[
             {
                 "role": "system",
-                "content": build_system_prompt()
+                "content": build_system_prompt(),
             },
             {
                 "role": "user",
-                "content": question
-            }
-        ]
+                "content": question,
+            },
+        ],
     )
 
     return response.choices[0].message.content
@@ -84,10 +95,3 @@ def generate_reply(question):
 if __name__ == "__main__":
     question = input("Ask the chatbot: ")
     print(generate_reply(question))
-
-"""
-Example prompts:
-1. I need a car for my family this weekend.
-2. What is the capital of France?
-3. How much is an SUV tomorrow?
-"""

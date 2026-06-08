@@ -1,73 +1,76 @@
 # Spring Boot + FastAPI Chatbot Demo
 
-This is a simple educational demo for students learning Java Spring Boot MVC.
-It shows Spring Boot acting as middleware between a server-rendered HTML page and a Python FastAPI AI service.
+This project is a small teaching demo. It shows how a Spring Boot web app can call a Python FastAPI service.
 
-## Architecture
+## Flow
 
 ```text
 Browser
--> Thymeleaf Form
--> Spring MVC Controller
--> Spring Service
--> HTTP POST
--> FastAPI
--> Mock LLM Response
--> Spring Boot
--> Thymeleaf View
--> Browser
+  -> Thymeleaf form
+  -> Spring MVC Controller
+  -> Spring Service
+  -> HTTP POST to FastAPI /chat
+  -> Python chatbot builds prompt with src/main/resources/data
+  -> OpenRouter LLM
+  -> FastAPI returns JSON
+  -> Spring Boot renders Thymeleaf page
+  -> Browser
 ```
 
-## Request Flow
+Students should notice that Spring Boot is the web app, while FastAPI is a separate AI service.
 
-1. User enters a message in the Thymeleaf form.
-2. Spring MVC receives the form submission.
-3. The controller passes the message to `ChatService`.
-4. `ChatService` sends an HTTP POST request to FastAPI.
-5. FastAPI calls `python_api/chatbot.py`.
-6. Python opens `src/main/resources/data`, builds the prompt, and returns a mock chatbot response.
-7. Spring Boot receives the response.
-8. Thymeleaf renders the updated page with:
-   - `User: <user message>`
-   - `Bot: <bot response>`
+## Folders
 
-## Run Everything
+```text
+src/main/java/                 Spring Boot code
+src/main/resources/templates/  Thymeleaf HTML page
+src/main/resources/data/       Text files used as chatbot context
+fastapi-llm-service/           FastAPI LLM service
+start.ps1                      Starts both services
+```
 
-Use one command from the project root:
+## Run
+
+From the project root:
 
 ```powershell
+$env:OPENROUTER_API_KEY="your_openrouter_key"
 .\start.ps1
 ```
 
-If PowerShell blocks scripts on your machine, run:
+If PowerShell blocks the script:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\start.ps1
 ```
 
-Then open:
+Open:
 
 ```text
 http://localhost:8080
 ```
 
-## Run Manually
-
-Start FastAPI:
-
-```powershell
-python -m pip install -r python_api/requirements.txt
-python -m uvicorn python_api.main:app --reload --port 8000
-```
-
-Open another terminal and start Spring Boot:
-
-```powershell
-.\mvnw spring-boot:run
-```
-
-Then open:
+## Ports
 
 ```text
-http://localhost:8080
+8080 = Spring Boot web app
+8000 = FastAPI AI service
+```
+
+Students only open `http://localhost:8080`. Spring Boot calls FastAPI internally.
+
+## Manual Run
+
+Terminal 1:
+
+```powershell
+$env:OPENROUTER_API_KEY="your_openrouter_key"
+python -m pip install -r fastapi-llm-service/requirements.txt
+python -m uvicorn app.main:app --reload --port 8000 --app-dir fastapi-llm-service
+```
+
+Terminal 2:
+
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
