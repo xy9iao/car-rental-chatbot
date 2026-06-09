@@ -26,8 +26,7 @@ public class ChatController {
     }
 
     // Receives the form submission from the browser.
-    // The controller stays thin: it reads the user input, asks the service for a reply,
-    // and passes the result back to Thymeleaf for rendering.
+    // The controller reads the user input, asks the service for a reply, and passes the result back to Thymeleaf for rendering.
     @PostMapping("/chat")
     public String chat(@ModelAttribute ChatRequest request, Model model) {
         String reply = chatService.getReply(request.getMessage());
@@ -39,7 +38,7 @@ public class ChatController {
         return "index";
     }
 
-    // Clear does not need JavaScript. It simply renders a fresh page.
+    // Clear simply renders a fresh page.
     @PostMapping("/clear")
     public String clear(Model model) {
         model.addAttribute("chatRequest", new ChatRequest());

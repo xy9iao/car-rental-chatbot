@@ -22,11 +22,6 @@ public class ChatService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // The service contains the main business flow:
-    // 1. Validate the user message.
-    // 2. Send it to FastAPI.
-    // 3. Read the FastAPI response.
-    // This demonstrates why Spring Boot can act as middleware between the browser and Python.
     public String getReply(String userMessage) {
         if (userMessage == null || userMessage.trim().isEmpty()) {
             return "Please enter a message.";
